@@ -1,97 +1,68 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# React Native Wifi Scanner Module
 
-# Getting Started
+Ce projet contient un module natif écrit en **Kotlin** pour React Native permettant de scanner les réseaux Wi-Fi environnants, publié sur le registre NPM.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 🚀 Installation
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+Pour installer et utiliser ce module dans votre propre projet React Native, exécutez la commande suivante dans votre terminal :
 
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```bash
+npm install react-native-wifi-scanner-nguema
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## ⚙️ Configuration Requise (Android)
 
-### Android
+Pour que le scan Wi-Fi fonctionne sur Android, vous devez activer les permissions nécessaires et le GPS.
 
-```sh
-# Using npm
-npm run android
+### 1. Permissions Android
+Vérifiez que les lignes suivantes sont présentes dans votre fichier `android/src/main/AndroidManifest.xml` :
 
-# OR using Yarn
-yarn android
+```xml
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 ```
 
-### iOS
+### 2. Activation du GPS
+> ⚠️ **Important** : Android exige obligatoirement que la **localisation (GPS)** soit activée sur l'appareil pour autoriser le scan des réseaux Wi-Fi. Pensez également à accorder la permission de position à l'application dans les paramètres du téléphone.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+---
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 💻 Utilisation
 
-```sh
-bundle install
+Voici comment importer et appeler le module dans votre composant React Native :
+
+```javascript
+import React from 'react';
+import { SafeAreaView, Button, Text, Alert, StyleSheet } from 'react-native';
+import { NativeModules } from 'react-native';
+
+export default function App() {
+  
+  const lancerScan = async () => {
+    try {
+      // Appel de la méthode native Kotlin
+      const reseaux = await NativeModules.WifiScanner.scanWifi();
+      Alert.alert("Réseaux Wi-Fi trouvés", JSON.stringify(reseaux));
+    } catch (erreur) {
+      Alert.alert("Erreur", "Impossible de scanner les réseaux");
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.titre}>Test du Module Wi-Fi</Text>
+      <Button title="Lancer le Scan Wi-Fi" onPress={lancerScan} />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  titre: { fontSize: 20, marginBottom: 20, fontWeight: 'bold' }
+});
 ```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
