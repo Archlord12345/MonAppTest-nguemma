@@ -105,7 +105,7 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.titre}>Scan Wi-Fi</Text>
+        <Text style={styles.titre}>Wifi Testa</Text>
         <TouchableOpacity
           style={[styles.button, chargement && styles.buttonDisabled]}
           onPress={lancerScan}
