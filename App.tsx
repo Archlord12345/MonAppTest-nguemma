@@ -8,8 +8,7 @@ import {
   PermissionsAndroid, 
   Platform,
   FlatList,
-  View,
-  TouchableOpacity
+  View
 } from 'react-native';
 import { NativeModules } from 'react-native';
 
