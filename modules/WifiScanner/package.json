@@ -1,0 +1,25 @@
+{
+  "name": "react-native-wifi-scanner-nguema",
+  "version": "1.0.1",
+  "description": "A native wifi scanner module for react-native",
+  "main": "src/index",
+  "codegenConfig": {
+    "name": "WifiScannerSpec",
+    "type": "modules",
+    "jsSrcsDir": "src"
+  },
+  "author": "nguemaaristide <nguemaaristidekeviin@gmail.com> (https://github.com/nguemaaristide)",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/nguemaaristide/react-native-wifi-scanner#readme",
+  "create-react-native-library": {
+    "type": "turbo-module",
+    "languages": "kotlin-objc",
+    "tools": [
+      "eslint",
+      "jest",
+      "lefthook",
+      "release-it"
+    ],
+    "version": "0.62.1"
+  }
+}

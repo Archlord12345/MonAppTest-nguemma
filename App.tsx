@@ -13,9 +13,7 @@ import {
   Modal,
   ActivityIndicator
 } from 'react-native';
-import { NativeModules } from 'react-native';
-
-const { WifiScanner } = NativeModules;
+import { scanWifi, connectToWifi } from 'react-native-wifi-scanner-nguema';
 
 export default function App() {
   const [listeWifi, setListeWifi] = useState<any[]>([]);
@@ -28,17 +26,29 @@ export default function App() {
   const demanderPermissionLocalisation = async () => {
     if (Platform.OS === 'android') {
       try {
-        const accordee = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: "Permission d'accès à la localisation",
-            message: "Cette application a besoin d'accéder à votre position pour scanner les réseaux Wi-Fi environnants.",
-            buttonNeutral: "Plus tard",
-            buttonNegative: "Annuler",
-            buttonPositive: "Autoriser",
-          }
-        );
-        return accordee === PermissionsAndroid.RESULTS.GRANTED;
+        const version = Number(Platform.Version);
+        if (version >= 33) {
+          const accordees = await PermissionsAndroid.requestMultiple([
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
+          ]);
+          return (
+            accordees[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED &&
+            accordees[PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES] === PermissionsAndroid.RESULTS.GRANTED
+          );
+        } else {
+          const accordee = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: "Permission d'accès à la localisation",
+              message: "Cette application a besoin d'accéder à votre position pour scanner les réseaux Wi-Fi environnants.",
+              buttonNeutral: "Plus tard",
+              buttonNegative: "Annuler",
+              buttonPositive: "Autoriser",
+            }
+          );
+          return accordee === PermissionsAndroid.RESULTS.GRANTED;
+        }
       } catch (err) {
         console.warn(err);
         return false;
@@ -58,12 +68,8 @@ export default function App() {
     }
 
     try {
-      if (WifiScanner && WifiScanner.scanWifi) {
-        const reseaux = await WifiScanner.scanWifi();
-        setListeWifi(reseaux || []);
-      } else {
-        Alert.alert("Erreur", "Le module natif WifiScanner n'est pas détecté.");
-      }
+      const reseaux = await scanWifi();
+      setListeWifi(reseaux || []);
     } catch (erreur: any) {
       Alert.alert("Erreur de scan", erreur?.message || "Erreur inconnue");
     } finally {
@@ -76,7 +82,7 @@ export default function App() {
 
     setConnecting(true);
     try {
-      const success = await WifiScanner.connectToWifi(selectedSSID, password);
+      const success = await connectToWifi(selectedSSID, password);
       if (success) {
         Alert.alert("Succès", `Connecté à ${selectedSSID}`);
         setModalVisible(false);
@@ -118,12 +124,12 @@ export default function App() {
         data={listeWifi}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => {
-          const ssid = typeof item === 'string' ? item : (item.SSID || item.ssid || "Réseau Inconnu");
+          const ssid = item.SSID || "Réseau Inconnu";
           return (
             <TouchableOpacity style={styles.itemWifi} onPress={() => openConnectModal(ssid)}>
               <View style={styles.wifiInfo}>
                 <Text style={styles.textSsid}>{ssid}</Text>
-                <Text style={styles.textConnect}>Appuyer pour se connecter</Text>
+                <Text style={styles.textConnect}>Signal: {item.level}dBm | Fréquence: {item.frequency}MHz</Text>
               </View>
               <View style={styles.chevron} />
             </TouchableOpacity>
