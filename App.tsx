@@ -20,9 +20,9 @@ import { scanWifi, connectToWifi } from 'react-native-wifi-scanner-nguema';
 import { useFavorites } from './src/hooks/useFavorites';
 import { useCurrentWifi } from './src/hooks/useCurrentWifi';
 
-// ── Theme ─────────────────────────────────────────────────────────────────────
+// ── Theme Configurations ──────────────────────────────────────────────────────
 
-const C = {
+const C_DARK = {
   bg:       '#0A0F1E',
   bg2:      '#111827',
   bg3:      '#1A2235',
@@ -32,6 +32,18 @@ const C = {
   text:     '#FFFFFF',
   textSub:  'rgba(255,255,255,0.45)',
   textMute: 'rgba(255,255,255,0.25)',
+};
+
+const C_LIGHT = {
+  bg:       '#F3F4F6',
+  bg2:      '#FFFFFF',
+  bg3:      '#E5E7EB',
+  accent:   '#2563EB',
+  surface:  'rgba(0,0,0,0.04)',
+  border:   'rgba(0,0,0,0.08)',
+  text:     '#1F2937',
+  textSub:  '#4B5563',
+  textMute: '#9CA3AF',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -57,9 +69,6 @@ function signalLabel(level: number) {
   if (level >= -85) return 'Faible';
   return 'Très faible';
 }
-function bandLabel(freq: number) {
-  return freq >= 5000 ? '5 GHz' : '2.4 GHz';
-}
 function securityColor(sec: string) {
   if (sec === 'Open') return '#FF6D00';
   if (sec === 'WEP')  return '#FFD740';
@@ -68,7 +77,7 @@ function securityColor(sec: string) {
 
 // ── SignalIcon ────────────────────────────────────────────────────────────────
 
-function SignalIcon({ level, size = 22 }: { level: number; size?: number }) {
+function SignalIcon({ level, size = 22, theme }: { level: number; size?: number; theme: typeof C_DARK }) {
   const bars = signalBars(level);
   const color = signalColor(level);
   const heights = [size * 0.3, size * 0.5, size * 0.7, size];
@@ -80,7 +89,7 @@ function SignalIcon({ level, size = 22 }: { level: number; size?: number }) {
           style={{
             width: size * 0.18,
             height: h,
-            backgroundColor: i < bars ? color : C.border,
+            backgroundColor: i < bars ? color : theme.border,
             borderRadius: 2,
           }}
         />
@@ -106,9 +115,11 @@ interface WifiCardProps {
   isFavorite: boolean;
   isConnected: boolean;
   index: number;
+  theme: typeof C_DARK;
+  styles: any;
 }
 
-function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }: WifiCardProps) {
+function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index, theme, styles }: WifiCardProps) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -137,7 +148,7 @@ function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }:
       >
         {/* Signal icon */}
         <View style={styles.cardIcon}>
-          <SignalIcon level={item.level} size={22} />
+          <SignalIcon level={item.level} size={22} theme={theme} />
         </View>
 
         {/* Info */}
@@ -146,7 +157,7 @@ function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }:
             <Text style={styles.cardSSID} numberOfLines={1}>{item.SSID}</Text>
             {isConnected && (
               <View style={styles.connectedBadge}>
-                <Text style={styles.connectedText}>✓ Connecté</Text>
+                <Text style={styles.connectedText}>Connecté</Text>
               </View>
             )}
           </View>
@@ -160,7 +171,6 @@ function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }:
 
             {/* Security badge */}
             <View style={[styles.pill, { borderColor: secColor, backgroundColor: secColor + '18' }]}>
-              <Text style={styles.secIcon}>{item.security === 'Open' ? '🔓' : '🔒'}</Text>
               <Text style={[styles.pillText, { color: secColor }]}>{item.security}</Text>
             </View>
 
@@ -175,8 +185,8 @@ function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }:
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={styles.starBtn}
         >
-          <Text style={[styles.star, { opacity: isFavorite ? 1 : 0.25 }]}>
-            {isFavorite ? '⭐' : '☆'}
+          <Text style={[styles.star, { color: isFavorite ? '#FFD740' : theme.textMute }]}>
+            {isFavorite ? '★' : '☆'}
           </Text>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -186,7 +196,7 @@ function WifiCard({ item, onPress, onFavorite, isFavorite, isConnected, index }:
 
 // ── SectionHeader ─────────────────────────────────────────────────────────────
 
-function SectionHeader({ title, count }: { title: string; count: number }) {
+function SectionHeader({ title, count, styles }: { title: string; count: number; styles: any }) {
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -199,7 +209,7 @@ function SectionHeader({ title, count }: { title: string; count: number }) {
 
 // ── Scan Button ───────────────────────────────────────────────────────────────
 
-function ScanButton({ onPress, loading }: { onPress: () => void; loading: boolean }) {
+function ScanButton({ onPress, loading, styles }: { onPress: () => void; loading: boolean; styles: any }) {
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (loading) {
@@ -220,7 +230,7 @@ function ScanButton({ onPress, loading }: { onPress: () => void; loading: boolea
       <Animated.View style={[styles.scanBtn, { transform: [{ scale: pulse }] }]}>
         {loading
           ? <ActivityIndicator color="#fff" size="small" />
-          : <Text style={styles.scanBtnText}>⟳  Scanner</Text>
+          : <Text style={styles.scanBtnText}>Scanner</Text>
         }
       </Animated.View>
     </TouchableOpacity>
@@ -230,6 +240,10 @@ function ScanButton({ onPress, loading }: { onPress: () => void; loading: boolea
 // ── Main App ──────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [isDark, setIsDark] = useState(true);
+  const theme = isDark ? C_DARK : C_LIGHT;
+  const styles = useMemo(() => getStyles(theme), [theme]);
+
   const [networks, setNetworks] = useState<WifiItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
@@ -313,12 +327,10 @@ export default function App() {
     const ghz24 = filtered.filter(n => n.frequency < 5000);
 
     const result = [];
-    if (ghz5.length)  result.push({ title: '⚡ 5 GHz',   data: ghz5 });
-    if (ghz24.length) result.push({ title: '📡 2.4 GHz', data: ghz24 });
+    if (ghz5.length)  result.push({ title: 'Bande 5 GHz',   data: ghz5 });
+    if (ghz24.length) result.push({ title: 'Bande 2.4 GHz', data: ghz24 });
     return result;
   }, [networks, query, tab, favorites]);
-
-  const totalFiltered = sections.reduce((s, sec) => s + sec.data.length, 0);
 
   // ── Modal ──
   const openModal = (item: WifiItem) => {
@@ -338,10 +350,10 @@ export default function App() {
     try {
       const success = await connectToWifi(selectedNetwork.SSID, password);
       if (success) {
-        Alert.alert("✅ Connecté", `Vous êtes connecté à « ${selectedNetwork.SSID} ».`);
+        Alert.alert("Connecté", `Vous êtes connecté à « ${selectedNetwork.SSID} ».`);
         closeModal();
       } else {
-        Alert.alert("❌ Échec", "Impossible de se connecter. Vérifiez le mot de passe.");
+        Alert.alert("Échec", "Impossible de se connecter. Vérifiez le mot de passe.");
       }
     } catch (e: any) {
       Alert.alert("Erreur", e?.message);
@@ -354,28 +366,36 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg} />
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.appTitle}>Wi-Fi Scanner</Text>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Text style={styles.appTitle}>Wi-Fi Scanner</Text>
+            <TouchableOpacity 
+              style={styles.themeToggle} 
+              onPress={() => setIsDark(d => !d)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.themeToggleText}>{isDark ? 'Clair' : 'Sombre'}</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.appSub}>
             {lastScan
               ? `Mise à jour ${lastScan.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
               : 'Détectez les réseaux à proximité'}
           </Text>
         </View>
-        <ScanButton onPress={scan} loading={loading} />
+        <ScanButton onPress={scan} loading={loading} styles={styles} />
       </View>
 
       {/* ── Search bar ── */}
       <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher un réseau..."
-          placeholderTextColor={C.textMute}
+          placeholderTextColor={theme.textMute}
           value={query}
           onChangeText={setQuery}
           returnKeyType="search"
@@ -396,7 +416,7 @@ export default function App() {
             onPress={() => setTab(t)}
           >
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'all' ? `Tous (${networks.length})` : `⭐ Favoris (${favorites.size})`}
+              {t === 'all' ? `Tous (${networks.length})` : `Favoris (${favorites.size})`}
             </Text>
           </TouchableOpacity>
         ))}
@@ -405,7 +425,6 @@ export default function App() {
       {/* ── Connected banner ── */}
       {currentSSID && (
         <View style={styles.connBanner}>
-          <Text style={styles.connBannerIcon}>📶</Text>
           <Text style={styles.connBannerText}>
             Connecté à <Text style={styles.connBannerSSID}>{currentSSID}</Text>
           </Text>
@@ -423,12 +442,12 @@ export default function App() {
           <RefreshControl
             refreshing={loading}
             onRefresh={scan}
-            tintColor={C.accent}
-            colors={[C.accent]}
+            tintColor={theme.accent}
+            colors={[theme.accent]}
           />
         }
         renderSectionHeader={({ section }) => (
-          <SectionHeader title={section.title} count={section.data.length} />
+          <SectionHeader title={section.title} count={section.data.length} styles={styles} />
         )}
         renderItem={({ item, index }) => (
           <WifiCard
@@ -438,11 +457,12 @@ export default function App() {
             isFavorite={favorites.has(item.SSID)}
             isConnected={item.SSID === currentSSID}
             index={index}
+            theme={theme}
+            styles={styles}
           />
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📡</Text>
             <Text style={styles.emptyTitle}>
               {tab === 'favorites' && favorites.size === 0
                 ? 'Aucun favori enregistré'
@@ -467,7 +487,7 @@ export default function App() {
 
           {/* Network info row */}
           <View style={styles.sheetHeader}>
-            <SignalIcon level={selectedNetwork?.level ?? -100} size={26} />
+            <SignalIcon level={selectedNetwork?.level ?? -100} size={26} theme={theme} />
             <View style={{ flex: 1 }}>
               <Text style={styles.sheetSSID} numberOfLines={1}>{selectedNetwork?.SSID}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -475,7 +495,7 @@ export default function App() {
                   {signalLabel(selectedNetwork?.level ?? -100)} · {selectedNetwork?.level} dBm
                 </Text>
                 <Text style={[styles.sheetMeta, { color: securityColor(selectedNetwork?.security ?? 'Open') }]}>
-                  {selectedNetwork?.security === 'Open' ? '🔓 Ouvert' : `🔒 ${selectedNetwork?.security}`}
+                  {selectedNetwork?.security === 'Open' ? 'Ouvert' : selectedNetwork?.security}
                 </Text>
               </View>
             </View>
@@ -484,7 +504,7 @@ export default function App() {
           {selectedNetwork?.security === 'Open' ? (
             <View style={styles.openNotice}>
               <Text style={styles.openNoticeText}>
-                ⚠️ Ce réseau est ouvert — aucun mot de passe requis mais la connexion n'est pas chiffrée.
+                Ce réseau est ouvert — aucun mot de passe requis mais la connexion n'est pas chiffrée.
               </Text>
             </View>
           ) : (
@@ -494,14 +514,14 @@ export default function App() {
                 <TextInput
                   style={styles.input}
                   placeholder="Entrez le mot de passe"
-                  placeholderTextColor={C.textMute}
+                  placeholderTextColor={theme.textMute}
                   secureTextEntry={!showPwd}
                   value={password}
                   onChangeText={setPassword}
                   autoFocus
                 />
                 <TouchableOpacity onPress={() => setShowPwd(v => !v)} style={styles.eyeBtn}>
-                  <Text style={styles.eyeIcon}>{showPwd ? '🙈' : '👁'}</Text>
+                  <Text style={styles.eyeIcon}>{showPwd ? 'Masquer' : 'Afficher'}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -528,12 +548,12 @@ export default function App() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+// ── Styles Generator ──────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const getStyles = (theme: typeof C_DARK) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: theme.bg,
     paddingTop: Platform.OS === 'android' ? 28 : 0,
   },
   // Header
@@ -544,21 +564,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: theme.border,
   },
-  appTitle: { fontSize: 24, fontWeight: '800', color: C.text, letterSpacing: 0.3 },
-  appSub:   { fontSize: 12, color: C.textSub, marginTop: 3 },
+  appTitle: { fontSize: 24, fontWeight: '800', color: theme.text, letterSpacing: 0.3 },
+  appSub:   { fontSize: 12, color: theme.textSub, marginTop: 3 },
+  themeToggle: {
+    backgroundColor: theme.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  themeToggleText: {
+    color: theme.textSub,
+    fontSize: 11,
+    fontWeight: '700',
+  },
   scanBtn: {
-    backgroundColor: C.accent,
+    backgroundColor: theme.accent,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 30,
-    elevation: 6,
-    shadowColor: C.accent,
+    elevation: 4,
+    shadowColor: theme.accent,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    minWidth: 110,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    minWidth: 100,
     alignItems: 'center',
   },
   scanBtnText: { color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.3 },
@@ -568,26 +601,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 14,
     marginBottom: 8,
-    backgroundColor: C.bg3,
+    backgroundColor: theme.bg3,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
     paddingHorizontal: 14,
     paddingVertical: 2,
   },
-  searchIcon:  { fontSize: 16, marginRight: 10 },
-  searchInput: { flex: 1, fontSize: 15, color: C.text, paddingVertical: 11 },
-  clearIcon:   { color: C.textMute, fontSize: 14, paddingLeft: 8 },
+  searchInput: { flex: 1, fontSize: 15, color: theme.text, paddingVertical: 11 },
+  clearIcon:   { color: theme.textMute, fontSize: 14, paddingLeft: 8 },
   // Tabs
   tabs: {
     flexDirection: 'row',
     marginHorizontal: 14,
     marginBottom: 6,
-    backgroundColor: C.bg3,
+    backgroundColor: theme.bg3,
     borderRadius: 12,
     padding: 4,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
   tab: {
     flex: 1,
@@ -595,8 +627,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
-  tabActive:     { backgroundColor: C.accent },
-  tabText:       { color: C.textSub, fontSize: 13, fontWeight: '600' },
+  tabActive:     { backgroundColor: theme.accent },
+  tabText:       { color: theme.textSub, fontSize: 13, fontWeight: '600' },
   tabTextActive: { color: '#fff' },
   // Connected banner
   connBanner: {
@@ -611,8 +643,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#00E67630',
   },
-  connBannerIcon: { fontSize: 16 },
-  connBannerText: { color: C.textSub, fontSize: 13 },
+  connBannerText: { color: theme.textSub, fontSize: 13 },
   connBannerSSID: { color: '#00E676', fontWeight: '700' },
   // List
   list: { paddingHorizontal: 14, paddingBottom: 40 },
@@ -623,26 +654,26 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
   },
-  sectionTitle: { color: C.textSub, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  sectionTitle: { color: theme.textSub, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   sectionPill: {
-    backgroundColor: C.surface,
+    backgroundColor: theme.surface,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
-  sectionCount: { color: C.textMute, fontSize: 11, fontWeight: '600' },
+  sectionCount: { color: theme.textMute, fontSize: 11, fontWeight: '600' },
   // Card
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.bg3,
+    backgroundColor: theme.bg2,
     borderRadius: 16,
     marginBottom: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
   cardConnected: {
     borderColor: '#00E67640',
@@ -652,16 +683,16 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: C.surface,
+    backgroundColor: theme.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
   cardInfo:  { flex: 1, gap: 5 },
   cardRow:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardSSID:  { flex: 1, fontSize: 15, fontWeight: '700', color: C.text },
+  cardSSID:  { flex: 1, fontSize: 15, fontWeight: '700', color: theme.text },
   connectedBadge: {
     backgroundColor: '#00E67618',
     borderRadius: 8,
@@ -682,16 +713,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   dot:       { width: 5, height: 5, borderRadius: 3 },
-  secIcon:   { fontSize: 10 },
   pillText:  { fontSize: 10, fontWeight: '600' },
-  cardDetail: { fontSize: 10, color: C.textMute },
+  cardDetail: { fontSize: 10, color: theme.textMute },
   starBtn:   { paddingLeft: 8 },
-  star:      { fontSize: 18 },
+  star:      { fontSize: 20, fontWeight: 'bold' },
   // Empty
   empty:      { alignItems: 'center', paddingTop: 70, gap: 10 },
-  emptyIcon:  { fontSize: 52 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: 'rgba(255,255,255,0.5)' },
-  emptyHint:  { fontSize: 13, color: C.textMute, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: theme.textSub },
+  emptyHint:  { fontSize: 13, color: theme.textMute, textAlign: 'center', lineHeight: 20 },
   // Modal / Sheet
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -702,13 +731,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: C.bg2,
+    backgroundColor: theme.bg2,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: Platform.OS === 'android' ? 30 : 44,
     borderTopWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
   sheetHandle: {
     width: 40,
@@ -723,13 +752,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     padding: 14,
-    backgroundColor: C.surface,
+    backgroundColor: theme.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
     marginBottom: 22,
   },
-  sheetSSID:  { fontSize: 17, fontWeight: '800', color: C.text },
+  sheetSSID:  { fontSize: 17, fontWeight: '800', color: theme.text },
   sheetMeta:  { fontSize: 12, fontWeight: '500' },
   openNotice: {
     padding: 14,
@@ -741,7 +770,7 @@ const styles = StyleSheet.create({
   },
   openNoticeText: { color: '#FF6D00', fontSize: 13, lineHeight: 20 },
   inputLabel: {
-    color: C.textSub,
+    color: theme.textSub,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -751,38 +780,33 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.bg3,
+    backgroundColor: theme.bg3,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
     marginBottom: 22,
     paddingRight: 12,
   },
-  input:   { flex: 1, padding: 14, fontSize: 16, color: C.text },
+  input:   { flex: 1, padding: 14, fontSize: 16, color: theme.text },
   eyeBtn:  { padding: 6 },
-  eyeIcon: { fontSize: 17 },
+  eyeIcon: { fontSize: 13, fontWeight: '600', color: theme.accent },
   sheetBtns: { flexDirection: 'row', gap: 12 },
   cancelBtn: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: C.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: theme.border,
   },
-  cancelBtnText: { color: C.textSub, fontWeight: '600', fontSize: 15 },
+  cancelBtnText: { color: theme.textSub, fontWeight: '600', fontSize: 15 },
   connectBtn: {
     flex: 2,
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: C.accent,
-    elevation: 4,
-    shadowColor: C.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    backgroundColor: theme.accent,
   },
   connectBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
