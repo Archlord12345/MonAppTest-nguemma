@@ -26,22 +26,43 @@ class WifiScannerModule(reactContext: ReactApplicationContext) : NativeWifiScann
   }
 
   @ReactMethod
+  @Suppress("DEPRECATION")
   override fun scanWifi(promise: Promise) {
     val wifiManager = reactApplicationContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     
     val wifiScanReceiver = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
-        val results = wifiManager.scanResults
+        val results = try {
+          wifiManager.scanResults
+        } catch (e: SecurityException) {
+          promise.reject("PERMISSION_DENIED", "Location permission is required to scan for WiFi networks")
+          return
+        }
+
         val wifiList: WritableArray = Arguments.createArray()
         
-        for (result in results) {
-          if (!result.SSID.isNullOrEmpty()) {
-            val wifiMap = Arguments.createMap()
-            wifiMap.putString("SSID", result.SSID)
-            wifiMap.putString("BSSID", result.BSSID)
-            wifiMap.putInt("level", result.level)
-            wifiMap.putInt("frequency", result.frequency)
-            wifiList.pushMap(wifiMap)
+        if (results != null) {
+          for (result in results) {
+            @Suppress("DEPRECATION")
+            val ssid = result.SSID
+            if (!ssid.isNullOrEmpty()) {
+              val wifiMap = Arguments.createMap()
+              wifiMap.putString("SSID", ssid)
+              wifiMap.putString("BSSID", result.BSSID)
+              wifiMap.putInt("level", result.level)
+              wifiMap.putInt("frequency", result.frequency)
+              val caps = result.capabilities ?: ""
+              wifiMap.putString("capabilities", caps)
+              val security = when {
+                caps.contains("WPA3") -> "WPA3"
+                caps.contains("WPA2") -> "WPA2"
+                caps.contains("WPA")  -> "WPA"
+                caps.contains("WEP")  -> "WEP"
+                else                  -> "Open"
+              }
+              wifiMap.putString("security", security)
+              wifiList.pushMap(wifiMap)
+            }
           }
         }
         try {
@@ -61,24 +82,46 @@ class WifiScannerModule(reactContext: ReactApplicationContext) : NativeWifiScann
       reactApplicationContext.registerReceiver(wifiScanReceiver, intentFilter)
     }
 
-    val success = wifiManager.startScan()
+    @Suppress("DEPRECATION")
+    val success = try {
+      wifiManager.startScan()
+    } catch (e: SecurityException) {
+      promise.reject("PERMISSION_DENIED", "Location permission is required to scan for WiFi networks")
+      return
+    }
+
     if (!success) {
-      // Scan was throttled or failed to start, return current results
-      val results = wifiManager.scanResults
-      val wifiList: WritableArray = Arguments.createArray()
-      for (result in results) {
-        if (!result.SSID.isNullOrEmpty()) {
-          val wifiMap = Arguments.createMap()
-          wifiMap.putString("SSID", result.SSID)
-          wifiMap.putString("BSSID", result.BSSID)
-          wifiMap.putInt("level", result.level)
-          wifiMap.putInt("frequency", result.frequency)
-          wifiList.pushMap(wifiMap)
-        }
-      }
+      // Unregister if scan failed to start immediately
       try {
         reactApplicationContext.unregisterReceiver(wifiScanReceiver)
       } catch (e: Exception) {}
+
+      // Return current results
+      @Suppress("DEPRECATION")
+      val results = try { wifiManager.scanResults } catch (e: SecurityException) { null }
+      val wifiList: WritableArray = Arguments.createArray()
+      results?.forEach { result ->
+        @Suppress("DEPRECATION")
+        val ssid = result.SSID
+        if (!ssid.isNullOrEmpty()) {
+          val wifiMap = Arguments.createMap()
+          wifiMap.putString("SSID", ssid)
+          wifiMap.putString("BSSID", result.BSSID)
+          wifiMap.putInt("level", result.level)
+          wifiMap.putInt("frequency", result.frequency)
+          val caps = result.capabilities ?: ""
+          wifiMap.putString("capabilities", caps)
+          val security = when {
+            caps.contains("WPA3") -> "WPA3"
+            caps.contains("WPA2") -> "WPA2"
+            caps.contains("WPA")  -> "WPA"
+            caps.contains("WEP")  -> "WEP"
+            else                  -> "Open"
+          }
+          wifiMap.putString("security", security)
+          wifiList.pushMap(wifiMap)
+        }
+      }
       promise.resolve(wifiList)
     }
   }

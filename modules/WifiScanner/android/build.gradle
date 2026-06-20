@@ -65,3 +65,31 @@ android {
 dependencies {
   implementation "com.facebook.react:react-android"
 }
+
+// Patch the codegen-generated CMakeLists.txt to add c++_shared for NDK 27 compatibility.
+// The generated CMakeLists does not include c++_shared which causes undefined symbol linker
+// errors with NDK 27's stricter linking behaviour.
+afterEvaluate {
+  tasks.matching { it.name.startsWith("generateCodegenArtifactsFrom") }.configureEach {
+    finalizedBy("patchCodegenCMakeLists")
+  }
+
+  task patchCodegenCMakeLists {
+    doLast {
+      def cmakeFile = file("${buildDir}/generated/source/codegen/jni/CMakeLists.txt")
+      if (cmakeFile.exists()) {
+        def content = cmakeFile.text
+        // Only add c++_shared if it's not already there
+        if (!content.contains("c++_shared")) {
+          content = content.replace(
+            "target_link_libraries(\n  react_codegen_WifiScannerSpec\n  fbjni",
+            "target_link_libraries(\n  react_codegen_WifiScannerSpec\n  c++_shared\n  fbjni"
+          )
+          cmakeFile.text = content
+          println("Patched codegen CMakeLists.txt with c++_shared")
+        }
+      }
+    }
+  }
+}
+
