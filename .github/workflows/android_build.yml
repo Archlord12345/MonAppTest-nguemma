@@ -9,7 +9,6 @@ on:
 jobs:
   build-android:
     name: Build Android APK
-    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
