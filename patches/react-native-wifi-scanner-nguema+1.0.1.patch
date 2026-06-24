@@ -1,0 +1,72 @@
+diff --git a/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerModule.kt b/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerModule.kt
+index 8768f37..9be8d24 100644
+--- a/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerModule.kt
++++ b/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerModule.kt
+@@ -3,18 +3,18 @@ package com.wifiscanner
+ import android.content.Context
+ import android.net.wifi.WifiManager
+ import com.facebook.react.bridge.ReactApplicationContext
++import com.facebook.react.bridge.ReactContextBaseJavaModule
+ import com.facebook.react.bridge.ReactMethod
+ import com.facebook.react.bridge.Promise
+-import com.wifiscanner.NativeWifiScannerSpec
+
+-class WifiScannerModule(reactContext: ReactApplicationContext) : NativeWifiScannerSpec(reactContext) {
++class WifiScannerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+
+   override fun getName(): String {
+     return NAME
+   }
+
+   @ReactMethod
+-  override fun scanWifi(promise: Promise) {
++  fun scanWifi(promise: Promise) {
+     try {
+       val wifiManager = reactApplicationContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+diff --git a/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerPackage.kt b/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerPackage.kt
+index 54e7ead..aadf6dd 100644
+--- a/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerPackage.kt
++++ b/node_modules/react-native-wifi-scanner-nguema/android/src/main/java/com/wifiscanner/WifiScannerPackage.kt
+@@ -1,31 +1,19 @@
+ package com.wifiscanner
+
+-import com.facebook.react.BaseReactPackage
++import com.facebook.react.ReactPackage
+ import com.facebook.react.bridge.NativeModule
+ import com.facebook.react.bridge.ReactApplicationContext
+-import com.facebook.react.module.model.ReactModuleInfo
+-import com.facebook.react.module.model.ReactModuleInfoProvider
+-import java.util.HashMap
++import com.facebook.react.uimanager.ViewManager
++import java.util.ArrayList
+
+-class WifiScannerPackage : BaseReactPackage() {
+-  override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
+-    return if (name == WifiScannerModule.NAME) {
+-      WifiScannerModule(reactContext)
+-    } else {
+-      null
+-    }
++class WifiScannerPackage : ReactPackage {
++  override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
++    val modules = ArrayList<NativeModule>()
++    modules.add(WifiScannerModule(reactContext))
++    return modules
+   }
+
+-  override fun getReactModuleInfoProvider() = ReactModuleInfoProvider {
+-    mapOf(
+-      WifiScannerModule.NAME to ReactModuleInfo(
+-        name = WifiScannerModule.NAME,
+-        className = WifiScannerModule.NAME,
+-        canOverrideExistingModule = false,
+-        needsEagerInit = false,
+-        isCxxModule = false,
+-        isTurboModule = true
+-      )
+-    )
++  override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
++    return emptyList()
+   }
+ }
